@@ -15,5 +15,8 @@ COPY . .
 # Expose port
 EXPOSE 10000
 
+# Create a simple script to handle port binding
+RUN echo '#!/bin/sh\nuvicorn main:app --host 0.0.0.0 --port ${PORT:-10000}' > /start.sh && chmod +x /start.sh
+
 # Run the application
-CMD ["sh", "-c", "uvicorn main:app --host 0.0.0.0 --port $PORT"]
+CMD ["/start.sh"]
