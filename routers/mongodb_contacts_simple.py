@@ -36,8 +36,12 @@ class SimpleContactOps:
                 return contact
         return None
 
+
+# Keep a single in-memory store for the whole process so data persists across requests
+_OPS_SINGLETON = SimpleContactOps()
+
 def get_contact_ops():
-    return SimpleContactOps()
+    return _OPS_SINGLETON
 
 @router.get("/")
 def get_contacts(sheet: str = Query(None), search: str = Query(None), ops: SimpleContactOps = Depends(get_contact_ops)):

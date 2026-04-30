@@ -26,6 +26,36 @@ app.add_middleware(
 
 # Try to use MongoDB first
 database_type = "Minimal Mode"
+
+
+def _include_in_memory_fallback_routers() -> None:
+    global database_type
+    from routers.mongodb_contacts_simple import router as contacts_router
+    from routers.mongodb_upload_simple import router as upload_router
+    from routers.mongodb_submit_simple import router as submit_router
+    from health_simple import router as health_router
+
+    database_type = "In-Memory Fallback"
+    app.include_router(contacts_router)
+    app.include_router(upload_router)
+    app.include_router(submit_router)
+    app.include_router(health_router)
+
+
+def _include_mongodb_routers() -> None:
+    global database_type
+    from routers.mongodb_contacts_fixed import router as contacts_router
+    from routers.mongodb_upload_fixed import router as upload_router
+    from routers.mongodb_submit_fixed import router as submit_router
+    from health_simple import router as health_router
+
+    database_type = "MongoDB Atlas"
+    app.include_router(contacts_router)
+    app.include_router(upload_router)
+    app.include_router(submit_router)
+    app.include_router(health_router)
+
+
 try:
     from pymongo import MongoClient
     from dotenv import load_dotenv
@@ -48,30 +78,19 @@ try:
             )
             client.admin.command("ping")
             
-            # Use MongoDB routers
-            from routers.mongodb_contacts_simple import router as contacts_router
-            from routers.mongodb_upload_simple import router as upload_router  
-            from routers.mongodb_submit_simple import router as submit_router
-            from health_simple import router as health_router
-            
-            database_type = "MongoDB Atlas"
+            _include_mongodb_routers()
             print("✅ MongoDB connected successfully")
-            
-            app.include_router(contacts_router)
-            app.include_router(upload_router)
-            app.include_router(submit_router)
-            app.include_router(health_router)
             
         except Exception as mongo_error:
             print(f"⚠️ MongoDB connection failed: {mongo_error}")
-            database_type = "MongoDB Failed"
+            _include_in_memory_fallback_routers()
     else:
         print("⚠️ MONGODB_PASSWORD not found")
-        database_type = "MongoDB Not Configured"
+        _include_in_memory_fallback_routers()
         
 except Exception as e:
     print(f"⚠️ MongoDB not available: {e}")
-    database_type = "MongoDB Unavailable"
+    _include_in_memory_fallback_routers()
 
 # Add basic endpoints for all modes
 @app.get("/")
