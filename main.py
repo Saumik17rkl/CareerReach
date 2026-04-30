@@ -57,37 +57,14 @@ def _include_mongodb_routers() -> None:
 
 
 try:
-    from pymongo import MongoClient
-    from dotenv import load_dotenv
-    import certifi
-    load_dotenv()
-    
-    mongodb_password = os.getenv("MONGODB_PASSWORD", "")
-    if mongodb_password:
-        try:
-            mongodb_uri = f"mongodb+srv://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net/CareerReach?retryWrites=true&w=majority&appName=Cluster0"
+    # Single source of truth for Mongo configuration
+    from mongodb_fixed import test_connection
 
-            # MongoDB Atlas requires TLS. Provide a trusted CA bundle.
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=30000,
-                connectTimeoutMS=30000,
-                socketTimeoutMS=30000,
-            )
-            client.admin.command("ping")
-            
-            _include_mongodb_routers()
-            print("✅ MongoDB connected successfully")
-            
-        except Exception as mongo_error:
-            print(f"⚠️ MongoDB connection failed: {mongo_error}")
-            _include_in_memory_fallback_routers()
+    if test_connection():
+        _include_mongodb_routers()
+        print("✅ MongoDB connected successfully")
     else:
-        print("⚠️ MONGODB_PASSWORD not found")
         _include_in_memory_fallback_routers()
-        
 except Exception as e:
     print(f"⚠️ MongoDB not available: {e}")
     _include_in_memory_fallback_routers()

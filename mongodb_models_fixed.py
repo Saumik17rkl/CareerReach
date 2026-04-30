@@ -59,7 +59,7 @@ class MongoContactOperations:
         
         try:
             # Try with ObjectId
-            from pymongo import ObjectId
+            from bson import ObjectId
             try:
                 contact = self.contacts.find_one({"_id": ObjectId(contact_id)})
                 if contact:

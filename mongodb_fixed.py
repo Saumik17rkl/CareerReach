@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 # MongoDB connection
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://saumik17rkl_db_user:<password>@cluster0.sz9lcyt.mongodb.net/?appName=Cluster0")
+MONGODB_URI = os.getenv("MONGODB_URI", "mongodb+srv://saumik17rkl_db_user:<password>@cluster0.sz9lcyt.mongodb.net/CareerReach?retryWrites=true&w=majority&appName=Cluster0")
 DB_NAME = "CareerReach"
 
 # Replace <password> with actual password from environment
@@ -15,7 +15,16 @@ if MONGODB_PASSWORD:
 # MongoDB client
 try:
     from pymongo import MongoClient
-    client = MongoClient(MONGODB_URI)
+    import certifi
+
+    client = MongoClient(
+        MONGODB_URI,
+        tls=True,
+        tlsCAFile=certifi.where(),
+        serverSelectionTimeoutMS=30000,
+        connectTimeoutMS=30000,
+        socketTimeoutMS=30000,
+    )
     db = client[DB_NAME]
     
     # Collections
