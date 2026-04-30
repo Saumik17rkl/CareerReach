@@ -1,0 +1,42 @@
+services:
+  # FastAPI Web Service
+  - type: web
+    name: careerreach-api
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    
+    # Environment variables (set these in Render dashboard)
+    envVars:
+      - key: DATABASE_URL
+        value: postgresql://user:password@host:5432/dbname
+      - key: ENVIRONMENT
+        value: production
+      - key: SECRET_KEY
+        generateValue: true
+      - key: MAX_FILE_SIZE
+        value: 50MB
+    
+    # Auto-deploy configuration
+    autoDeploy: true
+    repo: https://github.com/Saumik17rkl/CareerReach.git
+    branch: main
+    rootDir: .  # Repository root
+    
+    # Health check
+    healthCheck:
+      path: /health
+      checkInterval: 10
+      timeout: 10
+      retries: 3
+
+  # PostgreSQL Database (if using Render's managed database)
+  - type: psqldb
+    name: careerreach-db
+    plan: free
+    ipAllowList: []  # Only allow connections from the same Render region
+    
+    # Database connection info will be available in environment variables
+    # DATABASE_URL will be automatically set
