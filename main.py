@@ -34,14 +34,22 @@ try:
     mongodb_password = os.getenv("MONGODB_PASSWORD", "")
     if mongodb_password:
         try:
+            # Try without SSL first for Docker environments
+            mongodb_uri_no_ssl = f"mongodb://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net:27017/CareerReach?retryWrites=true&w=majority"
             mongodb_uri = f"mongodb+srv://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net/?appName=Cluster0"
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsAllowInvalidCertificates=True,
-                connectTimeoutMS=30000,
-                socketTimeoutMS=30000
-            )
+            
+            # Try without SSL first
+            try:
+                client = MongoClient(mongodb_uri_no_ssl, serverSelectionTimeoutMS=5000)
+                client.admin.command('ping')
+            except:
+                # Fallback to SRV with SSL disabled
+                client = MongoClient(
+                    mongodb_uri,
+                    tlsAllowInvalidCertificates=True,
+                    connectTimeoutMS=30000,
+                    socketTimeoutMS=30000
+                )
             client.admin.command('ping')
             
             # Use MongoDB routers
