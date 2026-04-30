@@ -37,7 +37,14 @@ try:
     if mongodb_password:
         try:
             mongodb_uri = f"mongodb+srv://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net/?appName=Cluster0"
-            client = MongoClient(mongodb_uri)
+            # Add SSL configuration for Docker environments
+            client = MongoClient(
+                mongodb_uri,
+                ssl=True,
+                ssl_cert_reqs='CERT_NONE',  # Allow self-signed certificates
+                connectTimeoutMS=30000,
+                socketTimeoutMS=30000
+            )
             client.admin.command('ping')  # Test connection
             
             # Use MongoDB routers (simple versions that work)
@@ -90,6 +97,16 @@ except Exception as e:
     except Exception as sqlite_error:
         print(f"❌ SQLite fallback also failed: {sqlite_error}")
         print("🚨 No database available - running in minimal mode")
+        
+        # Add basic endpoints for minimal mode
+        @app.get("/health")
+        def health_check():
+            return {
+                "status": "healthy",
+                "service": "CareerReach API",
+                "version": "2.0.0",
+                "database": "Minimal Mode"
+            }
 
 @app.get("/")
 def root():
