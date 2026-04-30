@@ -29,28 +29,24 @@ database_type = "Minimal Mode"
 try:
     from pymongo import MongoClient
     from dotenv import load_dotenv
+    import certifi
     load_dotenv()
     
     mongodb_password = os.getenv("MONGODB_PASSWORD", "")
     if mongodb_password:
         try:
-            # Try without SSL first for Docker environments
-            mongodb_uri_no_ssl = f"mongodb://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net:27017/CareerReach?retryWrites=true&w=majority"
-            mongodb_uri = f"mongodb+srv://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net/?appName=Cluster0"
-            
-            # Try without SSL first
-            try:
-                client = MongoClient(mongodb_uri_no_ssl, serverSelectionTimeoutMS=5000)
-                client.admin.command('ping')
-            except:
-                # Fallback to SRV with SSL disabled
-                client = MongoClient(
-                    mongodb_uri,
-                    tlsAllowInvalidCertificates=True,
-                    connectTimeoutMS=30000,
-                    socketTimeoutMS=30000
-                )
-            client.admin.command('ping')
+            mongodb_uri = f"mongodb+srv://saumik17rkl_db_user:{mongodb_password}@cluster0.sz9lcyt.mongodb.net/CareerReach?retryWrites=true&w=majority&appName=Cluster0"
+
+            # MongoDB Atlas requires TLS. Provide a trusted CA bundle.
+            client = MongoClient(
+                mongodb_uri,
+                tls=True,
+                tlsCAFile=certifi.where(),
+                serverSelectionTimeoutMS=30000,
+                connectTimeoutMS=30000,
+                socketTimeoutMS=30000,
+            )
+            client.admin.command("ping")
             
             # Use MongoDB routers
             from routers.mongodb_contacts_simple import router as contacts_router
